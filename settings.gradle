@@ -1,1 +1,4 @@
 rootProject.name = 'java-instrumentation-template'
+include 'vaadin-flow-server-24.0'
+include 'vaadin-flow-server-23.0'
+include 'vaadin-cdi'

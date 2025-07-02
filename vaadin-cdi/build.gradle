@@ -1,0 +1,32 @@
+
+// Build.gradle generated for instrumentation module vaadin-cdi
+
+apply plugin: 'java'
+
+dependencies {
+   implementation 'com.vaadin:vaadin-cdi:15.0.1'
+   implementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+
+   // New Relic Java Agent dependencies
+   implementation 'com.newrelic.agent.java:newrelic-agent:8.4.0'
+   implementation 'com.newrelic.agent.java:newrelic-api:8.4.0'
+   implementation fileTree(include: ['*.jar'], dir: '../libs')
+   implementation fileTree(include: ['*.jar'], dir: '../test-lib')
+}
+
+jar {
+  manifest {
+    attributes 'Implementation-Title': 'com.newrelic.instrumentation.labs.vaadin-cdi'
+    attributes 'Implementation-Vendor': 'New Relic Labs'
+    attributes 'Implementation-Vendor-Id': 'com.newrelic.labs'
+    attributes 'Implementation-Version': 1.0
+  }
+}
+
+verifyInstrumentation {
+  passes('com.vaadin:vaadin-cdi:[15.0.1]') {
+    compile 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+  }
+  // passes 'javax.servlet:servlet-api:[2.2,2.5]'
+  // exclude 'javax.servlet:servlet-api:2.4.public_draft'
+}
