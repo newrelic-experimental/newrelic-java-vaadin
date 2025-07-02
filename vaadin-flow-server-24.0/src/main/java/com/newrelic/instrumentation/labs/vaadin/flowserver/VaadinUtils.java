@@ -6,14 +6,27 @@ import java.util.Optional;
 import java.util.logging.Level;
 
 import com.newrelic.api.agent.NewRelic;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.dom.DomEvent;
+import com.vaadin.flow.dom.Element;
 import com.vaadin.flow.router.Location;
+import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.internal.RouteUtil;
 import com.vaadin.flow.server.VaadinContext;
 import com.vaadin.flow.server.VaadinRequest;
+import com.vaadin.flow.server.VaadinService;
+import com.vaadin.flow.server.VaadinServletContext;
+
+import jakarta.servlet.ServletContext;
 
 public class VaadinUtils {
 
+	public static final String NULL_STRING = "Null";
+	public static final String NO_ROUTE_PATH = "No Route Path";
+	public static final String ROOT_PATH = "RootPath";
+	
 	public static void addAttribute(Map<String, Object> attributes, String key, Object value) {
-		NewRelic.getAgent().getLogger().log(Level.FINE, "Attempting to add attribute ({0}, {1}) to {2}",key,value,attributes);
+		NewRelic.getAgent().getLogger().log(Level.FINE, "Attempting to add attribute ({0}, {1}) ",key,value);
 		if(value != null ) {
 			if(attributes != null && key != null && !key.isEmpty()) {
 				attributes.put(key, value);
@@ -22,7 +35,7 @@ public class VaadinUtils {
 			attributes.put(key, "null");
 		}
 	}
-	
+
 	public static void addLocation(Map<String, Object> attributes, Location location) {
 		if(location != null) {
 			addAttribute(attributes, "Location-Path", location.getPath());
@@ -35,7 +48,7 @@ public class VaadinUtils {
 			}
 		}
 	}
-	
+
 	public static void addVaadinContext(Map<String,Object> attributes, VaadinContext context) {
 		if(context != null) {
 			Enumeration<String> contextNames = context.getContextParameterNames();
@@ -45,7 +58,23 @@ public class VaadinUtils {
 			}
 		}
 	}
-	
+
+	public static void addDomEvent(Map<String,Object> attributes, DomEvent event) {
+		if(event != null) {
+			addAttribute(attributes, "DomEvent-Type", event.getType());
+			addAttribute(attributes, "DomEvent-Phase", event.getPhase().name());
+			addElement(attributes, event.getSource());
+		}
+	}
+
+	public static void addElement(Map<String, Object> attributes, Element element) {
+		if(element != null) {
+			addAttribute(attributes, "Element-Tag", element.getTag());
+			addAttribute(attributes, "Element-Text", element.getText());
+			addAttribute(attributes, "Element-OuterHTML", element.getOuterHTML());
+		}
+	}
+
 	public static void addVaadinRequest(Map<String,Object> attributes, VaadinRequest request) {
 		if(request != null) {
 			String contentType = request.getContentType();
@@ -73,13 +102,54 @@ public class VaadinUtils {
 					count++;
 				}
 			}
-			
+
 			String method = request.getMethod();
 			addAttribute(attributes, "Method", method);
 			String pathInfo = request.getPathInfo();
 			addAttribute(attributes, "PathInfo", pathInfo);
-			
-			
+
+
 		}
+	}
+
+	public static String getRoutePath(Component component) {
+		VaadinContext context = VaadinService.getCurrent().getContext();
+		
+		String contextPath = null;
+		if(context instanceof VaadinServletContext) {
+			ServletContext servletCtx = ((VaadinServletContext)context).getContext();
+			contextPath = servletCtx.getContextPath();
+		}
+
+		Component current = component;
+		while(current != null) {
+			Class<?> componentClass = current.getClass();
+			if(hasRoute(componentClass)) {
+				String routePath = RouteUtil.getRoutePath(context, componentClass);
+				if(routePath == null) {
+					return NULL_STRING;
+				} else {
+					if(routePath.isEmpty()) {
+						return contextPath != null ? contextPath + "/" : ROOT_PATH;
+					} else {
+						return contextPath != null ? contextPath + "/" + routePath : routePath;
+					}
+				}
+			} else {
+				Optional<Component> parent = current.getParent();
+				if(parent.isPresent()) {
+					current = parent.get(); 
+				} else {
+					current = null;
+				}
+			}
+		}
+
+		return NO_ROUTE_PATH;
+	}
+
+	public static boolean hasRoute(Class<?> clazz) {
+		Route route = clazz.getAnnotation(Route.class);
+		return route != null;
 	}
 }

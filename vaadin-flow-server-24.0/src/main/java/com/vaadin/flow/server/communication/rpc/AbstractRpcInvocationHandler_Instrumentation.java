@@ -5,6 +5,7 @@ import java.util.Optional;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Trace;
 import com.newrelic.api.agent.TracedMethod;
+import com.newrelic.api.agent.TransactionNamePriority;
 import com.newrelic.api.agent.weaver.MatchType;
 import com.newrelic.api.agent.weaver.Weave;
 import com.newrelic.api.agent.weaver.Weaver;
@@ -20,6 +21,7 @@ public abstract class AbstractRpcInvocationHandler_Instrumentation {
 	
 	@Trace
 	public Optional<Runnable> handle(UI ui, JsonObject invocationJson) {
+		NewRelic.getAgent().getTransaction().setTransactionName(TransactionNamePriority.CUSTOM_LOW, true, "RPCRequest", "Vaadin","RPCRequest",getRpcType());
 		TracedMethod traced = NewRelic.getAgent().getTracedMethod();
 		traced.setMetricName("Custom","Vaadin","RpcInvocationHandler",getClass().getSimpleName(),"handle");
 		traced.addCustomAttribute("RPCType", getRpcType());

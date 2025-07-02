@@ -26,7 +26,7 @@ public abstract class VaadinService_Instrumentation {
 			serviceName = "UnknownService";
 		}
 		TracedMethod traced = NewRelic.getAgent().getTracedMethod();
-		NewRelic.getAgent().getTransaction().setTransactionName(TransactionNamePriority.FRAMEWORK_HIGH, false, "VaadinService", "Vaadin","Service",serviceName);
+		NewRelic.getAgent().getTransaction().setTransactionName(TransactionNamePriority.FRAMEWORK_LOW, false, "VaadinService", "Vaadin","Service",serviceName);
 		traced.setMetricName("Custom","Vaadin","VaadinService",getClass().getSimpleName(),serviceName,"handleRequest");
 		HashMap<String, Object> attributes = new HashMap<String, Object>();
 		VaadinUtils.addVaadinRequest(attributes, request);

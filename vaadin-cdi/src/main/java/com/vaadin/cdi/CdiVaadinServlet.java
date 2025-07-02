@@ -18,6 +18,6 @@ public abstract class CdiVaadinServlet extends VaadinServlet {
 	
 	protected void service(HttpServletRequest request, HttpServletResponse response) {
 		Weaver.callOriginal();
-		NewRelic.getAgent().getTransaction().setTransactionName(TransactionNamePriority.FRAMEWORK_HIGH, false, "VaadinServlet", "VaadinServlet",getServletName());
+		NewRelic.getAgent().getTransaction().setTransactionName(TransactionNamePriority.FRAMEWORK_LOW, false, "VaadinServlet", "VaadinServlet",getServletName());
 	}
 }

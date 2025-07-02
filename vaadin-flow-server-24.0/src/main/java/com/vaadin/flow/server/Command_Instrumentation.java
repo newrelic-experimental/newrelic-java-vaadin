@@ -11,7 +11,7 @@ public abstract class Command_Instrumentation {
 
 	@Trace
 	public void execute() {
-		NewRelic.getAgent().getTracedMethod().setMetricName("Custom","Vaadin","Command",getClass().getSimpleName(),"execute");
+		NewRelic.getAgent().getTracedMethod().setMetricName("Custom","Vaadin","Command",getClass().getName(),"execute");
 		Weaver.callOriginal();
 	}
 }
