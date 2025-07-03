@@ -1,21 +1,28 @@
 package com.newrelic.instrumentation.labs.vaadin.flowserver;
 
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import com.newrelic.api.agent.NewRelic;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.dom.DomEvent;
 import com.vaadin.flow.dom.Element;
 import com.vaadin.flow.router.Location;
+import com.vaadin.flow.router.LocationUtil;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.internal.RouteUtil;
 import com.vaadin.flow.server.VaadinContext;
 import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.VaadinServletContext;
+import com.vaadin.flow.shared.ApplicationConstants;
 
 import jakarta.servlet.ServletContext;
 
@@ -24,7 +31,7 @@ public class VaadinUtils {
 	public static final String NULL_STRING = "Null";
 	public static final String NO_ROUTE_PATH = "No Route Path";
 	public static final String ROOT_PATH = "RootPath";
-	
+
 	public static void addAttribute(Map<String, Object> attributes, String key, Object value) {
 		NewRelic.getAgent().getLogger().log(Level.FINE, "Attempting to add attribute ({0}, {1}) ",key,value);
 		if(value != null ) {
@@ -114,7 +121,7 @@ public class VaadinUtils {
 
 	public static String getRoutePath(Component component) {
 		VaadinContext context = VaadinService.getCurrent().getContext();
-		
+
 		String contextPath = null;
 		if(context instanceof VaadinServletContext) {
 			ServletContext servletCtx = ((VaadinServletContext)context).getContext();
@@ -151,5 +158,69 @@ public class VaadinUtils {
 	public static boolean hasRoute(Class<?> clazz) {
 		Route route = clazz.getAnnotation(Route.class);
 		return route != null;
+	}
+
+	public static String[] nameJSBootstrapTransaction(VaadinRequest request) {
+		String pathAndParams = request.getParameter(ApplicationConstants.REQUEST_LOCATION_PARAMETER);
+		if(pathAndParams == null) return null;
+
+		List<String> pathSegments = LocationUtil.parsePathToSegments(pathAndParams, true);
+		
+		String[] txnNames = new String[pathSegments.size()+2];
+		
+		txnNames[0] = "Vaadin";
+		txnNames[1] = "JavaScriptBootstrapHandler";
+		int index = 2;
+		for(String segment : pathSegments) {
+			txnNames[index] = segment;
+			index++;
+		}
+
+		return txnNames;
+	}
+
+	public static String[] nameBootstrapTransaction(VaadinRequest request) {
+		String contextPath = request.getContextPath();
+		if(contextPath.startsWith("/")) contextPath = contextPath.substring(1);
+		String pathInfo = request.getPathInfo();
+		if(pathInfo.startsWith("/")) pathInfo = pathInfo.substring(1);
+		List<String> names = new ArrayList<String>();
+		names.add("Vaadin");
+		names.add("BootstrapHandler");
+		if(contextPath != null && !contextPath.isEmpty()) {
+			names.add(contextPath);
+		}
+		if(pathInfo != null && !pathInfo.isEmpty()) {
+			names.add(pathInfo);
+		}
+		String[] txnNames = new String[names.size()];
+		names.toArray(txnNames);
+
+		return txnNames;
+	}
+	
+	public static void dumpComponent(Component component) {
+		LinkedHashSet<String> parents = new LinkedHashSet<String>();
+		Component current = component;
+		while(current != null) {
+			Optional<Component> parentOp = current.getParent();
+			if(parentOp.isPresent()) {
+				Component parent = parentOp.get();
+				parents.add(parent.getClass().getName());
+				current = parent;
+			} else {
+				current = null;
+			}
+		}
+		NewRelic.getAgent().getLogger().log(Level.FINE, "Parents of {0}: {1}", component.getClass().getName(), parents.toString());
+		current = component;
+		Stream<Component> children = component.getChildren();
+		Iterator<Component> childIterator = children.iterator();
+		while(childIterator.hasNext()) {
+			Component child = childIterator.next();
+			NewRelic.getAgent().getLogger().log(Level.FINE, "Child of {0}: {1}", component.getClass().getName(), child.getClass().getName());
+			
+		}
+		
 	}
 }

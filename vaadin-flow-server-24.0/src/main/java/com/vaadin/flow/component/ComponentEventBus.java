@@ -15,6 +15,7 @@ public abstract class ComponentEventBus {
 	@Trace
 	public void fireEvent(ComponentEvent event) {
 		Component component = event.getSource();
+		VaadinUtils.dumpComponent(component);
 		HashMap<String, Object> attributes = new HashMap<String, Object>();
 
 		Class<?> componentClass = component.getClass();
