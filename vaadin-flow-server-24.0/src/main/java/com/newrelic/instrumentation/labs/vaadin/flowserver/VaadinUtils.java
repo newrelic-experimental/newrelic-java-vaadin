@@ -223,4 +223,30 @@ public class VaadinUtils {
 		}
 		
 	}
+
+	public static void dumpComponentWithSource(Component component, String source) {
+		LinkedHashSet<String> parents = new LinkedHashSet<String>();
+		Component current = component;
+		while(current != null) {
+			Optional<Component> parentOp = current.getParent();
+			if(parentOp.isPresent()) {
+				Component parent = parentOp.get();
+				parents.add(parent.getClass().getName());
+				current = parent;
+			} else {
+				current = null;
+			}
+		}
+		NewRelic.getAgent().getLogger().log(Level.FINE, source + " " + "Parents of {0}: {1}", component.getClass().getName(), parents.toString());
+		current = component;
+		Stream<Component> children = component.getChildren();
+		Iterator<Component> childIterator = children.iterator();
+		while(childIterator.hasNext()) {
+			Component child = childIterator.next();
+			NewRelic.getAgent().getLogger().log(Level.FINE,source + " " +  "Child of {0}: {1}", component.getClass().getName(), child.getClass().getName());
+			
+		}
+		
+	}
+
 }
