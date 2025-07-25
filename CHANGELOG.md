@@ -1,3 +1,6 @@
+## Version: [v1.0.0](https://github.com/newrelic-experimental/newrelic-java-vaadin/releases/tag/v1.0.0) | Created: 2025-07-25
+
+
 ## Installation
 
 To install:
